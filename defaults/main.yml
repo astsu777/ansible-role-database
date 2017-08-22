@@ -1,0 +1,5 @@
+---
+# Default variables for this role
+
+# Define the MariaDB root password
+mysql_root_password: MyPassword

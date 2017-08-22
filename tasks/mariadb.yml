@@ -1,0 +1,59 @@
+---
+# Install Ansible dependency to manage databases
+- name: (DATABASE) ANSIBLE - Install python-mysqldb module
+  package:
+    name: python-mysqldb
+    state: latest
+
+# Prepare the DEB package configuration
+- name: (DATABASE) Provide root password for MariaDB server
+  debconf:
+    name: mariadb-server
+    question: mysql-server/root_password
+    value: "{{ mysql_root_password }}"
+    vtype: password
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Confirm root password for MariaDB server
+  debconf:
+    name: mariadb-server
+    question: mysql-server/root_password_again
+    value: "{{ mysql_root_password }}"
+    vtype: password
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Install MariaDB Server
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - mariadb-server
+    - mariadb-client
+
+# Initiate the steps by the command 'mysql_secure_installation'
+
+- name: (DATABASE) Delete anonymous MySQL server user for localhost
+  mysql_user:
+    name: ""
+    state: absent
+    login_password: "{{ mysql_root_password }}"
+    login_user: root
+
+- name: (DATABASE) Secure the MySQL root user
+  mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    host: "{{ item }}"
+    login_password: "{{ mysql_root_password }}"
+    login_user: root
+  with_items:
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: (DATABASE) Remove the MySQL test database
+  mysql_db:
+    name: test
+    state: absent
+    login_password: "{{ mysql_root_password }}"
+    login_user: root

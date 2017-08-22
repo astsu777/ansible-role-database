@@ -1,0 +1,3 @@
+---
+# Install MariaDB on the destination server
+- include: mariadb.yml
