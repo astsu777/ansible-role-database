@@ -14,7 +14,9 @@ Role Variables
 
 The only variable of this role would be the root's password for MariaDB:
 
-```mysql_root_password: MyPass```
+```
+mysql_root_password: MyPass
+```
 
 That particular variable should be defined in host_vars and should be encrypted using *ansible-vault*.
 
