@@ -5,6 +5,13 @@
     name: python-mysqldb
     state: latest
 
+# Check if MariaDB is already installed
+- name: (DATABASE) Check if MariaDB server is already installed
+  command: dpkg -l mariadb-server
+  register: mariadbinstalled
+  changed_when: false
+  failed_when: false
+
 # Prepare the DEB package configuration
 - name: (DATABASE) Provide root password for MariaDB server
   debconf:
@@ -12,7 +19,7 @@
     question: mysql-server/root_password
     value: "{{ mysql_root_password }}"
     vtype: password
-  when: ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian" and ('ii' not in mariadbinstalled.stdout)
 
 - name: (DATABASE) Confirm root password for MariaDB server
   debconf:
@@ -20,7 +27,7 @@
     question: mysql-server/root_password_again
     value: "{{ mysql_root_password }}"
     vtype: password
-  when: ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian" and ('ii' not in mariadbinstalled.stdout)
 
 - name: (DATABASE) Install MariaDB Server
   package:
