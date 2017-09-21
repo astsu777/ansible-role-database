@@ -1,3 +1,7 @@
 ---
 # Install MariaDB on the destination server
 - include: mariadb.yml
+
+# Allow remote connections to database server
+- include: mariadb-remote.yml
+  when: db_remote_connections == "allow"

@@ -12,13 +12,30 @@ No specific requirements for this role.
 Role Variables
 --------------
 
-The only variable of this role would be the root's password for MariaDB:
+Three variables can be configured for this role, although only one is mandatory by default.
+
+The mandatory one is to define the root account's password to manage MariaDB:
 
 ```
 mysql_root_password: MyPass
 ```
 
 That particular variable should be defined in host_vars and should be encrypted using *ansible-vault*.
+
+--
+
+However, if the server needs to accept connections from other machines, it is necessary to define the following variables:
+
+```
+db_remote_connections: deny (Define the value as *allow* if you wish to allow remote connections)
+db_server_bind_address: 1.1.1.1 (This should be the IP address of the server where MariaDB will listen on)
+```
+
+These two variables, if you want to define them, can be defined in host_vars for example.
+
+
+**Note**: if the database server is running on the same server as, for example, your Web server, these variables are not required.
+
 
 Dependencies
 ------------

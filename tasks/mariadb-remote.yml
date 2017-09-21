@@ -1,0 +1,9 @@
+---
+- name: (DATABASE) Allow remote hosts to connect
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    backrefs: yes
+    regexp: '^bind-address'
+    line: 'bind-address            = {{ db_server_bind_address }}'
+    state: present
+  notify: restart mariadb
