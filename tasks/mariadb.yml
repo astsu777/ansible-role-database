@@ -1,8 +1,20 @@
 ---
+## Role Variables
+- name: (DATABASE) Set role variables for Debian OS family
+  set_fact:
+    mysql_python_interface: "python-mysqldb"
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Set role variables for Red Hat OS family
+  set_fact:
+    mysql_python_interface: "MySQL-python"
+  when: ansible_os_family == "RedHat"
+
+## Actions
 # Install Ansible dependency to manage databases
 - name: (DATABASE) ANSIBLE - Install python-mysqldb module
   package:
-    name: python-mysqldb
+    name: "{{ mysql_python_interface }}"
     state: latest
 
 # Check if MariaDB is already installed
@@ -11,6 +23,7 @@
   register: mariadbinstalled
   changed_when: false
   failed_when: false
+  when: ansible_os_family == "Debian"
 
 # Prepare the DEB package configuration
 - name: (DATABASE) Provide root password for MariaDB server
@@ -29,23 +42,33 @@
     vtype: password
   when: ansible_os_family == "Debian" and ('ii' not in mariadbinstalled.stdout)
 
-- name: (DATABASE) Install MariaDB Server
+# Install MariaDB server & client
+- name: (DATABASE) Install MariaDB Server on Debian OS family
   package:
     name: "{{ item }}"
     state: latest
   with_items:
     - mariadb-server
     - mariadb-client
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Install MariaDB Server on Red Hat OS family
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - mariadb-server
+  when: ansible_os_family == "RedHat"
+  register: mariadbinstalledrh
+
+- name: (DATABASE) Make sure the MariaDB service is started and enabled at boot
+  service:
+    name: mariadb
+    enabled: yes
+    state: started
+  when: ansible_os_family == "RedHat"
 
 # Initiate the steps by the command 'mysql_secure_installation'
-
-- name: (DATABASE) Delete anonymous MySQL server user for localhost
-  mysql_user:
-    name: ""
-    state: absent
-    login_password: "{{ mysql_root_password }}"
-    login_user: root
-
 - name: (DATABASE) Secure the MySQL root user
   mysql_user:
     name: root
@@ -57,6 +80,45 @@
     - 127.0.0.1
     - localhost
     - ::1
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Secure the MySQL root user (no pwd, hosts only)
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    login_user: root
+  with_items:
+    - 127.0.0.1
+    - localhost
+    - ::1
+  when: ansible_os_family == "RedHat" and mariadbinstalledrh is changed
+  register: mariadbrhnopwd
+
+- name: (DATABASE) Secure the MySQL root user (hosts only)
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  with_items:
+    - 127.0.0.1
+    - localhost
+    - ::1
+  when: ansible_os_family == "RedHat" and mariadbinstalledrh is not changed
+
+- name: (DATABASE) Secure the MySQL root user with a password
+  mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    login_user: root
+  when: ansible_os_family == "RedHat" and mariadbinstalledrh is changed
+
+- name: (DATABASE) Delete anonymous MySQL server user for localhost
+  mysql_user:
+    name: ""
+    state: absent
+    login_password: "{{ mysql_root_password }}"
+    login_user: root
 
 - name: (DATABASE) Remove the MySQL test database
   mysql_db:
