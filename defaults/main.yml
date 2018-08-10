@@ -8,4 +8,4 @@ mysql_root_password: MyPassword
 db_remote_connections: deny
 
 # If remote connections are authorized, define the IP address the server will listen to
-db_server_bind_address: 1.1.1.1
+db_server_bind_address: 0.0.0.0

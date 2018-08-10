@@ -3,3 +3,8 @@
   service:
     name: mysql
     state: restarted
+
+- name: restart mariadbrh
+  service:
+    name: mariadb
+    state: restarted

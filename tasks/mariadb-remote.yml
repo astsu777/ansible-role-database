@@ -1,5 +1,5 @@
 ---
-- name: (DATABASE) Allow remote hosts to connect
+- name: (DATABASE) Allow remote hosts to connect (Debian)
   lineinfile:
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
     backrefs: yes
@@ -7,3 +7,13 @@
     line: 'bind-address            = {{ db_server_bind_address }}'
     state: present
   notify: restart mariadb
+  when: ansible_os_family == "Debian"
+
+- name: (DATABASE) Allow remote hosts to connect (Red Hat)
+  lineinfile:
+    path: /etc/my.cnf.d/server.cnf
+    state: present
+    insertafter: '^\[mysqld\]'
+    line: 'bind-address            = {{ db_server_bind_address }}'
+  notify: restart mariadbrh
+  when: ansible_os_family == "RedHat"
